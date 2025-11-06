@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>French Cities — Restaurants</title>
+  <style>
+    :root {
+      --mustard: #ffcc4d;
+      --mustard-dark: #e0b83a;
+      --bg: #fffaf3;
+      --card: #ffffff;
+      --muted: #666;
+      --accent-text: #333;
+      --max-width: 1200px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg);
+      color: var(--accent-text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--mustard), var(--mustard-dark));
+      color: #111;
+      padding: 22px 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 6px 20px rgba(224, 184, 58, 0.12);
+    }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 28px auto;
+      padding: 0 20px 60px;
+    }
+
+    /* City Grid */
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+
+    .city-card {
+      background: linear-gradient(180deg, #fff, #fffaf0);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      cursor: pointer;
+      border: 1px solid rgba(243, 229, 171, 0.9);
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+
+    .city-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.12);
+    }
+
+    .city-card.active {
+      background: linear-gradient(180deg, var(--mustard), var(--mustard-dark));
+      color: #111;
+    }
+
+    .city-title {
+      color: #b35a00;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .city-card.active .city-title {
+      color: #111;
+    }
+
+    .city-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .city-card.active .city-desc {
+      color: #333;
+    }
+
+    /* Full-screen overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 12, 0.45);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px 16px;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .panel {
+      width: min(1100px, 96%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 250, 0.98));
+      border-radius: 14px;
+      box-shadow: 0 30px 80px rgba(11, 20, 30, 0.45);
+      padding: 22px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-left {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .panel-city {
+      font-size: 22px;
+      font-weight: 800;
+      color: #8a3f00;
+    }
+
+    .panel-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .close-btn {
+      background: var(--mustard);
+      border: none;
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #111;
+      box-shadow: 0 8px 24px rgba(224, 184, 58, 0.18);
+    }
+
+    /* Category sections */
+    .category {
+      margin-bottom: 22px;
+    }
+
+    .category h3 {
+      margin: 0 0 10px 0;
+      color: #a05c00;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category p.lead {
+      margin: 0 0 12px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Restaurant grid inside overlay */
+    .restaurant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      justify-items: center;
+    }
+
+    .restaurant-card {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      border: 1px solid rgba(243, 229, 171, 0.68);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 340px;
+    }
+
+    .restaurant-media {
+      height: 160px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .restaurant-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .restaurant-name {
+      font-weight: 700;
+      color: #6d2f00;
+      font-size: 16px;
+      line-height: 1.3;
+    }
+
+    .restaurant-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .restaurant-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: #444;
+      margin-top: 4px;
+    }
+
+    .price {
+      margin-top: auto;
+      font-weight: 800;
+      color: #0f5132;
+      padding-top: 8px;
+    }
+
+    .cuisine-tag {
+      background: var(--mustard);
+      color: #111;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-top: 5px;
+      align-self: flex-start;
+    }
+
+    /* Featured restaurants grid */
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    /* Language Toggle Styles */
+    .lang-toggle {
+      display: flex;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 5px;
+      margin-left: 15px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .lang-btn.active {
+      background: white;
+      color: #111;
+    }
+
+    /* Responsive */
+    @media (max-width:880px) {
+      .panel {
+        padding: 16px;
+        width: 96%;
+      }
+
+      .restaurant-media {
+        height: 140px
+      }
+      
+      .restaurant-grid, .featured-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+    }
+
+    @media (max-width:520px) {
+      header {
+        font-size: 16px;
+        padding: 16px
+      }
+
+      .city-title {
+        font-size: 16px
+      }
+
+      .city-desc {
+        font-size: 12px
+      }
+
+      .restaurant-media {
+        height: 130px
+      }
+      
+      .restaurant-grid, .featured-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Responsive Header with Navigation -->
+<header style="background-color: #f9f9f9; color: #000; font-family: Arial, sans-serif; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #ddd;">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
+    
+    <!-- Logo or Site Title -->
+    <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">
+      <a href="index.html" style="color: #000; text-decoration: none;" data-en="French Restaurants" data-fr="Restaurants Français">French Restaurants</a>
+    </h1>
+
+    <!-- Navigation with Language Toggle -->
+    <div style="display: flex; align-items: center;">
+      <!-- Navigation Links -->
+      <nav id="main-nav" style="display: flex; align-items: center;">
+        <a href="home.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Home" data-fr="Accueil">Home</a>
+        <a href="hotels.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Hotels" data-fr="Hôtels">Hotels</a>
+        <a href="cultural.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Culture" data-fr="Culture">Culture</a>
+        <a href="monument.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Monuments" data-fr="Monuments">Monuments</a>
+        <a href="rest.html" style="color: #000; text-decoration: none; margin: 0 12px; font-weight: bold;" data-en="Restaurants" data-fr="Restaurants">Restaurants</a>
+      </nav>
+
+      <!-- Language Toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+    </div>
+
+    <!-- Hamburger Icon for Mobile -->
+    <span id="menu-toggle" style="display: none; font-size: 26px; cursor: pointer; color: #000;">&#9776;</span>
+  </div>
+</header>
+
+<!-- Mobile-Friendly Styles -->
+<style>
+  @media (max-width: 768px) {
+    nav#main-nav {
+      display: none;
+      flex-direction: column;
+      background-color: #f9f9f9;
+      padding: 10px 0;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+    }
+    nav#main-nav a {
+      margin: 10px 0;
+      display: block;
+    }
+    #menu-toggle {
+      display: block;
+    }
+    .lang-toggle {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+</style>
+
+  <div class="container">
+    <h2 style="text-align: center; color: #b35a00; margin-bottom: 30px;" data-en="Discover French Cuisine" data-fr="Découvrez la Cuisine Française">Discover French Cuisine</h2>
+    <p style="text-align: center; color: var(--muted); max-width: 800px; margin: 0 auto 40px;" 
+       data-en="From traditional Lyonnaise bouchons to Provençal seafood and Parisian bistros, explore the diverse culinary landscape of France's most beautiful cities."
+       data-fr="Des bouchons lyonnais traditionnels aux fruits de mer provençaux et aux bistrots parisiens, explorez le paysage culinaire diversifié des plus belles villes de France.">
+       From traditional Lyonnaise bouchons to Provençal seafood and Parisian bistros, explore the diverse culinary landscape of France's most beautiful cities.
+    </p>
+
+    <div class="city-grid">
+      <div class="city-card" onclick="openOverlay('Lyon')">
+        <div class="city-title">Lyon</div>
+        <div class="city-desc" data-en="The gastronomic capital of France with traditional bouchons" 
+              data-fr="La capitale gastronomique de France avec ses bouchons traditionnels">
+              The gastronomic capital of France with traditional bouchons
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Paris')">
+        <div class="city-title">Paris</div>
+        <div class="city-desc" data-en="World-class bistros, patisseries, and Michelin-starred dining" 
+              data-fr="Bistrots de classe mondiale, pâtisseries et restaurants étoilés Michelin">
+              World-class bistros, patisseries, and Michelin-starred dining
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Nice')">
+        <div class="city-title">Nice</div>
+        <div class="city-desc" data-en="Mediterranean flavors and Niçoise specialties" 
+              data-fr="Saveurs méditerranéennes et spécialités niçoises">
+              Mediterranean flavors and Niçoise specialties
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Marseille')">
+        <div class="city-title">Marseille</div>
+        <div class="city-desc" data-en="Fresh seafood and Provençal cuisine by the sea" 
+              data-fr="Fruits de mer frais et cuisine provençale au bord de la mer">
+              Fresh seafood and Provençal cuisine by the sea
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Bordeaux')">
+        <div class="city-title">Bordeaux</div>
+        <div class="city-desc" data-en="Wine country dining and Southwest French specialties" 
+              data-fr="Restaurants du pays du vin et spécialités du Sud-Ouest">
+              Wine country dining and Southwest French specialties
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Strasbourg')">
+        <div class="city-title">Strasbourg</div>
+        <div class="city-desc" data-en="Alsatian cuisine with French-German influences" 
+              data-fr="Cuisine alsacienne aux influences franco-allemandes">
+              Alsatian cuisine with French-German influences
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Toulouse')">
+        <div class="city-title">Toulouse</div>
+        <div class="city-desc" data-en="Cassoulet capital with Southwest French cuisine" 
+              data-fr="Capitale du cassoulet avec la cuisine du Sud-Ouest">
+              Cassoulet capital with Southwest French cuisine
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Annecy')">
+        <div class="city-title">Annecy</div>
+        <div class="city-desc" data-en="Alpine cuisine with fresh lake fish and Savoyard dishes" 
+              data-fr="Cuisine alpine avec poissons du lac frais et plats savoyards">
+              Alpine cuisine with fresh lake fish and Savoyard dishes
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Carcassonne')">
+        <div class="city-title">Carcassonne</div>
+        <div class="city-desc" data-en="Medieval dining with Languedoc specialties" 
+              data-fr="Restauration médiévale avec spécialités du Languedoc">
+              Medieval dining with Languedoc specialties
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Montpellier')">
+        <div class="city-title">Montpellier</div>
+        <div class="city-desc" data-en="Mediterranean cuisine with modern twists" 
+              data-fr="Cuisine méditerranéenne avec des touches modernes">
+              Mediterranean cuisine with modern twists
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Avignon')">
+        <div class="city-title">Avignon</div>
+        <div class="city-desc" data-en="Provençal cuisine in historic papal city" 
+              data-fr="Cuisine provençale dans la cité papale historique">
+              Provençal cuisine in historic papal city
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Restaurants Section -->
+    <div class="category">
+      <h3 data-en="🍽️ Featured Restaurants" data-fr="🍽️ Restaurants en Vedette">🍽️ Featured Restaurants</h3>
+      <p class="lead" data-en="Top-rated dining experiences across France" 
+         data-fr="Expériences culinaires les mieux notées à travers la France">
+         Top-rated dining experiences across France
+      </p>
+      <div class="featured-grid">
+        <div class="restaurant-card" onclick="openOverlay('Lyon')">
+          <div class="restaurant-media" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80');"></div>
+          <div class="restaurant-body">
+            <div class="restaurant-name" data-en="Paul Bocuse Restaurant" data-fr="Restaurant Paul Bocuse">Paul Bocuse Restaurant</div>
+            <div class="restaurant-meta" data-en="Lyon • 3 Michelin Stars" data-fr="Lyon • 3 Étoiles Michelin">Lyon • 3 Michelin Stars</div>
+            <div class="restaurant-icons">⭐ 4.9 • 🕒 3+ hours</div>
+            <div class="cuisine-tag" data-en="Haute Cuisine" data-fr="Haute Cuisine">Haute Cuisine</div>
+            <div class="price">€250+ per person</div>
+          </div>
+        </div>
+
+        <div class="restaurant-card" onclick="openOverlay('Paris')">
+          <div class="restaurant-media" style="background-image: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80');"></div>
+          <div class="restaurant-body">
+            <div class="restaurant-name" data-en="Le Jules Verne" data-fr="Le Jules Verne">Le Jules Verne</div>
+            <div class="restaurant-meta" data-en="Paris • Eiffel Tower" data-fr="Paris • Tour Eiffel">Paris • Eiffel Tower</div>
+            <div class="restaurant-icons">⭐ 4.8 • 🕒 2+ hours</div>
+            <div class="cuisine-tag" data-en="French Contemporary" data-fr="Français Contemporain">French Contemporary</div>
+            <div class="price">€180+ per person</div>
+          </div>
+        </div>
+
+        <div class="restaurant-card" onclick="openOverlay('Nice')">
+          <div class="restaurant-media" style="background-image: url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80');"></div>
+          <div class="restaurant-body">
+            <div class="restaurant-name" data-en="La Merenda" data-fr="La Merenda">La Merenda</div>
+            <div class="restaurant-meta" data-en="Nice • Old Town" data-fr="Nice • Vieille Ville">Nice • Old Town</div>
+            <div class="restaurant-icons">⭐ 4.7 • 🕒 1.5 hours</div>
+            <div class="cuisine-tag" data-en="Niçoise Traditional" data-fr="Traditionnel Niçois">Niçoise Traditional</div>
+            <div class="price">€40-€60 per person</div>
+          </div>
+        </div>
+
+        <div class="restaurant-card" onclick="openOverlay('Bordeaux')">
+          <div class="restaurant-media" style="background-image: url('https://images.unsplash.com/photo-1554679665-f5537f187268?auto=format&fit=crop&w=800&q=80');"></div>
+          <div class="restaurant-body">
+            <div class="restaurant-name" data-en="Le Pressoir d'Argent" data-fr="Le Pressoir d'Argent">Le Pressoir d'Argent</div>
+            <div class="restaurant-meta" data-en="Bordeaux • Gordon Ramsay" data-fr="Bordeaux • Gordon Ramsay">Bordeaux • Gordon Ramsay</div>
+            <div class="restaurant-icons">⭐ 4.9 • 🕒 3+ hours</div>
+            <div class="cuisine-tag" data-en="Haute Cuisine" data-fr="Haute Cuisine">Haute Cuisine</div>
+            <div class="price">€200+ per person</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full page overlay panel -->
+  <div id="overlay" class="overlay" onclick="overlayBackgroundClick(event)">
+    <div id="panel" class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-city">
+      <div class="panel-header">
+        <div class="panel-left">
+          <div>
+            <div id="panel-city" class="panel-city">City Name</div>
+            <div id="panel-desc" class="panel-sub" data-en="City restaurant scene description" data-fr="Description de la scène culinaire de la ville">City restaurant scene description</div>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="back-btn" onclick="backToGrid()" data-en="Back" data-fr="Retour">Back</button>
+          <button class="close-btn" onclick="closeOverlay()" data-en="Close" data-fr="Fermer">Close</button>
+        </div>
+      </div>
+
+      <!-- CATEGORIES: All inline -->
+      <div id="content-area">
+        <!-- Fine Dining -->
+        <section id="fine-dining" class="category">
+          <h3 data-en="⭐ Fine Dining" data-fr="⭐ Gastronomie">⭐ Fine Dining</h3>
+          <p class="lead" data-en="Michelin-starred restaurants and haute cuisine experiences." 
+             data-fr="Restaurants étoilés Michelin et expériences de haute cuisine.">
+             Michelin-starred restaurants and haute cuisine experiences.
+          </p>
+          <div id="fine-dining-grid" class="restaurant-grid"></div>
+        </section>
+
+        <!-- Traditional -->
+        <section id="traditional" class="category">
+          <h3 data-en="🍷 Traditional Cuisine" data-fr="🍷 Cuisine Traditionnelle">🍷 Traditional Cuisine</h3>
+          <p class="lead" data-en="Authentic regional specialties and classic French dishes." 
+             data-fr="Spécialités régionales authentiques et plats français classiques.">
+             Authentic regional specialties and classic French dishes.
+          </p>
+          <div id="traditional-grid" class="restaurant-grid"></div>
+        </section>
+
+        <!-- Casual -->
+        <section id="casual" class="category">
+          <h3 data-en="🥖 Casual & Bistros" data-fr="🥖 Bistrots & Décontracté">🥖 Casual & Bistros</h3>
+          <p class="lead" data-en="Relaxed dining, bistros, and brasseries for everyday meals." 
+             data-fr="Restauration décontractée, bistrots et brasseries pour les repas quotidiens.">
+             Relaxed dining, bistros, and brasseries for everyday meals.
+          </p>
+          <div id="casual-grid" class="restaurant-grid"></div>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Language toggle functionality
+    const langButtons = document.querySelectorAll('.lang-btn');
+    let currentLang = 'en';
+
+    langButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const lang = button.getAttribute('data-lang');
+        if (lang !== currentLang) {
+          // Update active button
+          langButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Update language
+          currentLang = lang;
+          updateLanguage(lang);
+          
+          // Re-render the current city overlay with new language
+          const currentCity = document.getElementById('panel-city').textContent;
+          if (currentCity && currentCity !== 'City Name') {
+            openOverlay(currentCity);
+          }
+        }
+      });
+    });
+
+    // Function to update all text content based on language
+    function updateLanguage(lang) {
+      // Update all elements with data attributes
+      const elements = document.querySelectorAll(`[data-${lang}]`);
+      elements.forEach(element => {
+        const text = element.getAttribute(`data-${lang}`);
+        if (text) {
+          element.textContent = text;
+        }
+      });
+    }
+
+    const data = {
+      'Lyon': {
+        desc: {
+          en: "The gastronomic capital of France, famous for its traditional bouchons and refined cuisine.",
+          fr: "La capitale gastronomique de la France, célèbre pour ses bouchons traditionnels et sa cuisine raffinée."
+        },
+        fineDining: [
+          {
+            name: {
+              en: "Paul Bocuse Restaurant",
+              fr: "Restaurant Paul Bocuse"
+            },
+            rating: "4.9",
+            image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "40 Rue de la Plage, Collonges-au-Mont-d'Or",
+              fr: "40 Rue de la Plage, Collonges-au-Mont-d'Or"
+            },
+            info: {
+              en: "3 Michelin stars, legendary chef Paul Bocuse's flagship restaurant",
+              fr: "3 étoiles Michelin, restaurant phare du légendaire chef Paul Bocuse"
+            },
+            cuisine: {
+              en: "Haute Cuisine",
+              fr: "Haute Cuisine"
+            },
+            price: "€250+ per person"
+          }
+        ],
+        traditional: [
+          {
+            name: {
+              en: "Le Bouchon des Filles",
+              fr: "Le Bouchon des Filles"
+            },
+            rating: "4.6",
+            image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "20 Rue Sergent Blandan, Lyon",
+              fr: "20 Rue Sergent Blandan, Lyon"
+            },
+            info: {
+              en: "Authentic Lyonnaise bouchon with traditional dishes and atmosphere",
+              fr: "Bouchon lyonnais authentique avec plats traditionnels et atmosphère"
+            },
+            cuisine: {
+              en: "Lyonnaise",
+              fr: "Lyonnaise"
+            },
+            price: "€35-€55 per person"
+          }
+        ],
+        casual: [
+          {
+            name: {
+              en: "Les Halles de Lyon Paul Bocuse",
+              fr: "Les Halles de Lyon Paul Bocuse"
+            },
+            rating: "4.8",
+            image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "102 Cours Lafayette, Lyon",
+              fr: "102 Cours Lafayette, Lyon"
+            },
+            info: {
+              en: "Famous food market with multiple casual dining options and stalls",
+              fr: "Marché alimentaire célèbre avec multiples options de restauration décontractée"
+            },
+            cuisine: {
+              en: "Market Food",
+              fr: "Cuisine de Marché"
+            },
+            price: "€15-€30 per person"
+          }
+        ]
+      },
+      'Paris': {
+        desc: {
+          en: "The world's culinary capital with everything from Michelin-starred temples to charming neighborhood bistros.",
+          fr: "La capitale culinaire mondiale avec tout, des temples étoilés Michelin aux charmants bistrots de quartier."
+        },
+        fineDining: [
+          {
+            name: {
+              en: "Alain Ducasse au Plaza Athénée",
+              fr: "Alain Ducasse au Plaza Athénée"
+            },
+            rating: "4.9",
+            image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "25 Avenue Montaigne, Paris",
+              fr: "25 Avenue Montaigne, Paris"
+            },
+            info: {
+              en: "3 Michelin stars, contemporary French cuisine in luxurious setting",
+              fr: "3 étoiles Michelin, cuisine française contemporaine dans un cadre luxueux"
+            },
+            cuisine: {
+              en: "Haute Cuisine",
+              fr: "Haute Cuisine"
+            },
+            price: "€350+ per person"
+          }
+        ],
+        traditional: [
+          {
+            name: {
+              en: "Le Comptoir du Relais",
+              fr: "Le Comptoir du Relais"
+            },
+            rating: "4.7",
+            image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "9 Carrefour de l'Odéon, Paris",
+              fr: "9 Carrefour de l'Odéon, Paris"
+            },
+            info: {
+              en: "Classic Parisian bistro with traditional French dishes",
+              fr: "Bistrot parisien classique avec plats français traditionnels"
+            },
+            cuisine: {
+              en: "French Bistro",
+              fr: "Bistrot Français"
+            },
+            price: "€45-€70 per person"
+          }
+        ],
+        casual: [
+          {
+            name: {
+              en: "Septime",
+              fr: "Septime"
+            },
+            rating: "4.6",
+            image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "80 Rue de Charonne, Paris",
+              fr: "80 Rue de Charonne, Paris"
+            },
+            info: {
+              en: "Trendy neo-bistro with natural wines and creative dishes",
+              fr: "Néo-bistrot branché avec vins naturels et plats créatifs"
+            },
+            cuisine: {
+              en: "Modern Bistro",
+              fr: "Bistrot Moderne"
+            },
+            price: "€60-€90 per person"
+          }
+        ]
+      },
+      'Nice': {
+        desc: {
+          en: "Mediterranean flavors dominate with fresh seafood, Niçoise salads, and Provençal specialties.",
+          fr: "Les saveurs méditerranéennes dominent avec fruits de mer frais, salades niçoises et spécialités provençales."
+        },
+        fineDining: [
+          {
+            name: {
+              en: "Flaveur",
+              fr: "Flaveur"
+            },
+            rating: "4.8",
+            image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "25 Rue Gubernatis, Nice",
+              fr: "25 Rue Gubernatis, Nice"
+            },
+            info: {
+              en: "2 Michelin stars, creative Mediterranean cuisine with local ingredients",
+              fr: "2 étoiles Michelin, cuisine méditerranéenne créative avec ingrédients locaux"
+            },
+            cuisine: {
+              en: "Mediterranean",
+              fr: "Méditerranéenne"
+            },
+            price: "€120-€180 per person"
+          }
+        ],
+        traditional: [
+          {
+            name: {
+              en: "La Merenda",
+              fr: "La Merenda"
+            },
+            rating: "4.7",
+            image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "4 Rue Raoul Bosio, Nice",
+              fr: "4 Rue Raoul Bosio, Nice"
+            },
+            info: {
+              en: "Tiny authentic Niçoise restaurant, no phone reservations",
+              fr: "Petit restaurant niçois authentique, pas de réservation par téléphone"
+            },
+            cuisine: {
+              en: "Niçoise",
+              fr: "Niçoise"
+            },
+            price: "€40-€60 per person"
+          }
+        ],
+        casual: [
+          {
+            name: {
+              en: "Lou Pistou",
+              fr: "Lou Pistou"
+            },
+            rating: "4.6",
+            image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80",
+            location: {
+              en: "4 Rue Raoul Bosio, Nice",
+              fr: "4 Rue Raoul Bosio, Nice"
+            },
+            info: {
+              en: "Cozy restaurant serving authentic Niçoise home cooking",
+              fr: "Restaurant cozy servant une cuisine maison niçoise authentique"
+            },
+            cuisine: {
+              en: "Niçoise",
+              fr: "Niçoise"
+            },
+            price: "€25-€45 per person"
+          }
+        ]
+      }
+      // Note: Other cities would follow the same bilingual pattern
+    };
+
+    function el(tag, cls, html) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (html !== undefined) e.innerHTML = html;
+      return e;
+    }
+
+    function renderRestaurantCard(r) {
+      const card = el('div', 'restaurant-card');
+      const media = el('div', 'restaurant-media');
+      media.style.backgroundImage = `url('${r.image}')`;
+      const body = el('div', 'restaurant-body');
+      
+      // Use translated content based on current language
+      const restaurantName = r.name[currentLang] || r.name.en;
+      const restaurantLocation = r.location[currentLang] || r.location.en;
+      const restaurantInfo = r.info[currentLang] || r.info.en;
+      const restaurantCuisine = r.cuisine[currentLang] || r.cuisine.en;
+      
+      body.appendChild(el('div', 'restaurant-name', `${restaurantName} <span style="font-size:12px;color:#8a4c00"> • ${r.rating}⭐</span>`));
+      body.appendChild(el('div', 'restaurant-meta', `${restaurantLocation}`));
+      body.appendChild(el('div', 'restaurant-icons', `🍽️ ${restaurantInfo.split(',')[0] || ''}`));
+      body.appendChild(el('div', 'cuisine-tag', `${restaurantCuisine}`));
+      body.appendChild(el('div', 'price', `${r.price}`));
+      card.appendChild(media);
+      card.appendChild(body);
+      return card;
+    }
+
+    const overlay = document.getElementById('overlay');
+    const panelCity = document.getElementById('panel-city');
+    const panelDesc = document.getElementById('panel-desc');
+    const fineDiningGrid = document.getElementById('fine-dining-grid');
+    const traditionalGrid = document.getElementById('traditional-grid');
+    const casualGrid = document.getElementById('casual-grid');
+    const cityCards = document.querySelectorAll('.city-card');
+
+    function openOverlay(city) {
+      // Update active city card
+      cityCards.forEach(card => {
+        card.classList.remove('active');
+        if (card.querySelector('.city-title').textContent === city) {
+          card.classList.add('active');
+        }
+      });
+
+      panelCity.textContent = city;
+      
+      // Update description with translation
+      if (data[city] && data[city].desc) {
+        const cityDesc = data[city].desc[currentLang] || data[city].desc.en;
+        panelDesc.textContent = cityDesc;
+      } else {
+        panelDesc.textContent = currentLang === 'en' 
+          ? "Explore the restaurant scene in this city."
+          : "Explorez la scène culinaire de cette ville.";
+      }
+      
+      fineDiningGrid.innerHTML = '';
+      traditionalGrid.innerHTML = '';
+      casualGrid.innerHTML = '';
+
+      if (data[city]) {
+        if (data[city].fineDining) data[city].fineDining.forEach(r => fineDiningGrid.appendChild(renderRestaurantCard(r)));
+        if (data[city].traditional) data[city].traditional.forEach(r => traditionalGrid.appendChild(renderRestaurantCard(r)));
+        if (data[city].casual) data[city].casual.forEach(r => casualGrid.appendChild(renderRestaurantCard(r)));
+      } else {
+        fineDiningGrid.appendChild(el('div', 'restaurant-meta', currentLang === 'en' ? 'No fine dining data yet.' : 'Aucune donnée de gastronomie pour le moment.'));
+        traditionalGrid.appendChild(el('div', 'restaurant-meta', currentLang === 'en' ? 'No traditional restaurant data yet.' : 'Aucune donnée de restaurant traditionnel pour le moment.'));
+        casualGrid.appendChild(el('div', 'restaurant-meta', currentLang === 'en' ? 'No casual dining data yet.' : 'Aucune donnée de restauration décontractée pour le moment.'));
+      }
+
+      overlay.classList.add('open');
+      overlay.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function backToGrid() {
+      closeOverlay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function overlayBackgroundClick(e) {
+      if (e.target === overlay) closeOverlay();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('open')) {
+        closeOverlay();
+      }
+    });
+
+    document.querySelectorAll('.city-card').forEach(c => {
+      c.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          const city = c.querySelector('.city-title').innerText;
+          openOverlay(city);
+        }
+      });
+      c.tabIndex = 0;
+    });
+
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navMenu = document.getElementById('main-nav');
+
+    if (menuToggle && navMenu) {
+      menuToggle.addEventListener('click', () => {
+        navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex';
+      });
+    }
+  </script>
+  
+  <!-- Footer Section -->
+  <footer
+    style="background-color: #222; color: #aaa; padding: 25px 0; font-family: Arial, sans-serif; font-size: 14px;">
+    <div
+      style="max-width: 1100px; margin: auto; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+
+      <!-- Left: Quick Info -->
+      <div style="min-width: 200px; margin: 5px 0;">
+        <p style="margin: 0;" data-en="&copy; 2025 France travels" data-fr="&copy; 2025 Voyages France">&copy; 2025 France travels</p>
+        <p style="margin: 5px 0 0;" data-en="Discover France with us!" data-fr="Découvrez la France avec nous!">Discover France with us!</p>
+      </div>
+
+      <!-- Center: Quick Navigation -->
+      <div style="min-width: 250px; margin: 5px 0; text-align: center;">
+        <a href="#lyon" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Lyon" data-fr="Lyon">Lyon</a> |
+        <a href="#nice" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Nice" data-fr="Nice">Nice</a> |
+        <a href="#contact" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Contact" data-fr="Contact">Contact</a>
+      </div>
+
+      <!-- Right: Social Links -->
+      <div style="min-width: 200px; text-align: right; margin: 5px 0;">
+        <p style="margin: 0 0 8px;" data-en="Follow Us" data-fr="Suivez-nous">Follow Us</p>
+        <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">FB</a>
+        <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">IG</a>
+        <a href="#" style="color: #aaa; text-decoration: none;">TW</a>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+
+</html>

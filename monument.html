@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>French Monuments — Cultural Heritage</title>
+  <style>
+    :root {
+      --mustard: #ffcc4d;
+      --mustard-dark: #e0b83a;
+      --bg: #fffaf3;
+      --card: #ffffff;
+      --muted: #666;
+      --accent-text: #333;
+      --max-width: 1200px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg);
+      color: var(--accent-text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--mustard), var(--mustard-dark));
+      color: #111;
+      padding: 22px 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 6px 20px rgba(224, 184, 58, 0.12);
+    }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 28px auto;
+      padding: 0 20px 60px;
+    }
+
+    /* City Grid */
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .city-card {
+      background: linear-gradient(180deg, #fff, #fffaf0);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      cursor: pointer;
+      border: 1px solid rgba(243, 229, 171, 0.9);
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+
+    .city-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.12);
+    }
+
+    .city-title {
+      color: #b35a00;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .city-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    /* Full-screen overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 12, 0.45);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px 16px;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .panel {
+      width: min(1100px, 96%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 250, 0.98));
+      border-radius: 14px;
+      box-shadow: 0 30px 80px rgba(11, 20, 30, 0.45);
+      padding: 22px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-left {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .panel-city {
+      font-size: 22px;
+      font-weight: 800;
+      color: #8a3f00;
+    }
+
+    .panel-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .close-btn {
+      background: var(--mustard);
+      border: none;
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #111;
+      box-shadow: 0 8px 24px rgba(224, 184, 58, 0.18);
+    }
+
+    /* Category sections */
+    .category {
+      margin-bottom: 22px;
+    }
+
+    .category h3 {
+      margin: 0 0 10px 0;
+      color: #a05c00;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category p.lead {
+      margin: 0 0 12px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Monument grid inside overlay */
+    .monument-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .monument-card {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      border: 1px solid rgba(243, 229, 171, 0.68);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .monument-media {
+      height: 150px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .monument-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .monument-name {
+      font-weight: 700;
+      color: #6d2f00;
+      font-size: 15px;
+    }
+
+    .monument-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .monument-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .period {
+      margin-top: 8px;
+      font-weight: 800;
+      color: #0f5132;
+    }
+
+    /* Language Toggle Styles */
+    .lang-toggle {
+      display: flex;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 5px;
+      margin-left: 15px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .lang-btn.active {
+      background: white;
+      color: #111;
+    }
+
+    /* Responsive */
+    @media (max-width:880px) {
+      .panel {
+        padding: 16px;
+        width: 96%;
+      }
+
+      .monument-media {
+        height: 140px
+      }
+    }
+
+    @media (max-width:520px) {
+      header {
+        font-size: 16px;
+        padding: 16px
+      }
+
+      .city-title {
+        font-size: 16px
+      }
+
+      .city-desc {
+        font-size: 12px
+      }
+
+      .monument-media {
+        height: 120px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Responsive Header with Navigation -->
+<header style="background-color: #f9f9f9; color: #000; font-family: Arial, sans-serif; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #ddd;">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
+    
+    <!-- Logo or Site Title -->
+    <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">
+      <a href="index.html" style="color: #000; text-decoration: none;" data-en="French Monuments" data-fr="Monuments Français">French Monuments</a>
+    </h1>
+
+    <!-- Navigation with Language Toggle -->
+    <div style="display: flex; align-items: center;">
+      <!-- Navigation Links -->
+      <nav id="main-nav" style="display: flex; align-items: center;">
+        <a href="home.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Home" data-fr="Accueil">Home</a>
+        <a href="hotels.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Hotels" data-fr="Hôtels">Hotels</a>
+        <a href="cultural.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Culture" data-fr="Culture">Culture</a>
+        <a href="monument.html" style="color: #000; text-decoration: none; margin: 0 12px; font-weight: bold;" data-en="Monuments" data-fr="Monuments">Monuments</a>
+        <a href="rest.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Restaurants" data-fr="Restaurants">Restaurants</a>
+      </nav>
+
+      <!-- Language Toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+    </div>
+
+    <!-- Hamburger Icon for Mobile -->
+    <span id="menu-toggle" style="display: none; font-size: 26px; cursor: pointer; color: #000;">&#9776;</span>
+  </div>
+</header>
+
+<!-- Mobile-Friendly Styles -->
+<style>
+  @media (max-width: 768px) {
+    nav#main-nav {
+      display: none;
+      flex-direction: column;
+      background-color: #f9f9f9;
+      padding: 10px 0;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+    }
+    nav#main-nav a {
+      margin: 10px 0;
+      display: block;
+    }
+    #menu-toggle {
+      display: block;
+    }
+    .lang-toggle {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+</style>
+
+  <div class="container">
+    <div class="city-grid">
+      <div class="city-card" onclick="openOverlay('Lyon')">
+        <div class="city-title">Lyon</div>
+        <div class="city-desc" data-en="A UNESCO World Heritage site with Roman ruins, Renaissance architecture, and traboules." 
+              data-fr="Site du patrimoine mondial de l'UNESCO avec des ruines romaines, une architecture Renaissance et des traboules.">
+              A UNESCO World Heritage site with Roman ruins, Renaissance architecture, and traboules.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Nice')">
+        <div class="city-title">Nice</div>
+        <div class="city-desc" data-en="Historic coastal city with Baroque churches, Russian Orthodox Cathedral, and Belle Époque architecture." 
+              data-fr="Ville côtière historique avec des églises baroques, la cathédrale orthodoxe russe et l'architecture Belle Époque.">
+              Historic coastal city with Baroque churches, Russian Orthodox Cathedral, and Belle Époque architecture.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Marseille')">
+        <div class="city-title">Marseille</div>
+        <div class="city-desc" data-en="Ancient port city with Notre-Dame de la Garde basilica, historic forts, and Le Panier district." 
+              data-fr="Ville portuaire ancienne avec la basilique Notre-Dame de la Garde, des forts historiques et le quartier du Panier.">
+              Ancient port city with Notre-Dame de la Garde basilica, historic forts, and Le Panier district.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Bordeaux')">
+        <div class="city-title">Bordeaux</div>
+        <div class="city-desc" data-en="Elegant city with 18th-century architecture, UNESCO-listed historic center, and Place de la Bourse." 
+              data-fr="Ville élégante avec une architecture du 18ème siècle, un centre historique classé à l'UNESCO et la Place de la Bourse.">
+              Elegant city with 18th-century architecture, UNESCO-listed historic center, and Place de la Bourse.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Strasbourg')">
+        <div class="city-title">Strasbourg</div>
+        <div class="city-desc" data-en="Home to the magnificent Gothic cathedral, picturesque canals, and European Parliament buildings." 
+              data-fr="Abrite la magnifique cathédrale gothique, des canaux pittoresques et les bâtiments du Parlement européen.">
+              Home to the magnificent Gothic cathedral, picturesque canals, and European Parliament buildings.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Toulouse')">
+        <div class="city-title">Toulouse</div>
+        <div class="city-desc" data-en="The 'Pink City' with Romanesque basilicas, Renaissance mansions, and space exploration monuments." 
+              data-fr="La 'Ville Rose' avec des basiliques romanes, des hôtels particuliers Renaissance et des monuments de l'exploration spatiale.">
+              The 'Pink City' with Romanesque basilicas, Renaissance mansions, and space exploration monuments.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Annecy')">
+        <div class="city-title">Annecy</div>
+        <div class="city-desc" data-en="Alpine city with medieval castle, charming canals, and historic old town on Lake Annecy." 
+              data-fr="Ville alpine avec un château médiéval, des canaux charmants et une vieille ville historique sur le lac d'Annecy.">
+              Alpine city with medieval castle, charming canals, and historic old town on Lake Annecy.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Carcassonne')">
+        <div class="city-title">Carcassonne</div>
+        <div class="city-desc" data-en="Europe's largest fortified medieval city with double-walled ramparts and castle." 
+              data-fr="Plus grande cité médiévale fortifiée d'Europe avec des remparts à double muraille et un château.">
+              Europe's largest fortified medieval city with double-walled ramparts and castle.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Montpellier')">
+        <div class="city-title">Montpellier</div>
+        <div class="city-desc" data-en="Historic university city with medieval streets, neoclassical architecture, and modern landmarks." 
+              data-fr="Ville universitaire historique avec des rues médiévales, une architecture néoclassique et des monuments modernes.">
+              Historic university city with medieval streets, neoclassical architecture, and modern landmarks.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Avignon')">
+        <div class="city-title">Avignon</div>
+        <div class="city-desc" data-en="Famous for the Palais des Papes (Palace of the Popes) and its iconic medieval bridge." 
+              data-fr="Célèbre pour le Palais des Papes et son pont médiéval emblématique.">
+              Famous for the Palais des Papes (Palace of the Popes) and its iconic medieval bridge.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full page overlay panel -->
+  <div id="overlay" class="overlay" onclick="overlayBackgroundClick(event)">
+    <div id="panel" class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-city">
+      <div class="panel-header">
+        <div class="panel-left">
+          <div>
+            <div id="panel-city" class="panel-city">City Name</div>
+            <div id="panel-desc" class="panel-sub" data-en="City short description" data-fr="Description courte de la ville">City short description</div>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="back-btn" onclick="backToGrid()" data-en="Back" data-fr="Retour">Back</button>
+          <button class="close-btn" onclick="closeOverlay()" data-en="Close" data-fr="Fermer">Close</button>
+        </div>
+      </div>
+
+      <!-- CATEGORIES: All inline -->
+      <div id="content-area">
+        <!-- Historical -->
+        <section id="historical" class="category">
+          <h3 data-en="🏛️ Historical Monuments" data-fr="🏛️ Monuments Historiques">🏛️ Historical Monuments</h3>
+          <p class="lead" data-en="Ancient sites and structures that tell the story of France's rich history." 
+             data-fr="Sites anciens et structures qui racontent l'histoire riche de la France.">
+             Ancient sites and structures that tell the story of France's rich history.
+          </p>
+          <div id="historical-grid" class="monument-grid"></div>
+        </section>
+
+        <!-- Architectural -->
+        <section id="architectural" class="category">
+          <h3 data-en="🏗️ Architectural Marvels" data-fr="🏗️ Merveilles Architecturales">🏗️ Architectural Marvels</h3>
+          <p class="lead" data-en="Stunning buildings showcasing France's architectural innovation and artistry." 
+             data-fr="Bâtiments époustouflants montrant l'innovation et l'art architectural de la France.">
+             Stunning buildings showcasing France's architectural innovation and artistry.
+          </p>
+          <div id="architectural-grid" class="monument-grid"></div>
+        </section>
+
+        <!-- Cultural -->
+        <section id="cultural" class="category">
+          <h3 data-en="🎭 Cultural Landmarks" data-fr="🎭 Lieux Culturels Emblématiques">🎭 Cultural Landmarks</h3>
+          <p class="lead" data-en="Sites of cultural significance that have shaped French identity and heritage." 
+             data-fr="Sites d'importance culturelle qui ont façonné l'identité et le patrimoine français.">
+             Sites of cultural significance that have shaped French identity and heritage.
+          </p>
+          <div id="cultural-grid" class="monument-grid"></div>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Language toggle functionality
+    const langButtons = document.querySelectorAll('.lang-btn');
+    let currentLang = 'en';
+
+    langButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const lang = button.getAttribute('data-lang');
+        if (lang !== currentLang) {
+          // Update active button
+          langButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Update language
+          currentLang = lang;
+          updateLanguage(lang);
+          
+          // Re-render the current city overlay with new language
+          const currentCity = document.getElementById('panel-city').textContent;
+          if (currentCity && currentCity !== 'City Name') {
+            openOverlay(currentCity);
+          }
+        }
+      });
+    });
+
+    // Function to update all text content based on language
+    function updateLanguage(lang) {
+      // Update all elements with data attributes
+      const elements = document.querySelectorAll(`[data-${lang}]`);
+      elements.forEach(element => {
+        const text = element.getAttribute(`data-${lang}`);
+        if (text) {
+          element.textContent = text;
+        }
+      });
+    }
+
+    const data = {
+      'Lyon': {
+        desc: {
+          en: "A UNESCO World Heritage site with Roman ruins, Renaissance architecture, and traboules.",
+          fr: "Site du patrimoine mondial de l'UNESCO avec des ruines romaines, une architecture Renaissance et des traboules."
+        },
+        historical: [
+          {
+            name: {
+              en: "Basilique Notre-Dame de Fourvière",
+              fr: "Basilique Notre-Dame de Fourvière"
+            },
+            rating: "4.8",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Fourvière Hill, Lyon",
+              fr: "Colline de Fourvière, Lyon"
+            },
+            info: {
+              en: "Perched high above the city, this magnificent church combines Romanesque and Byzantine styles with gold mosaics and intricate marble work.",
+              fr: "Perchée haut au-dessus de la ville, cette magnifique église combine les styles roman et byzantin avec des mosaïques dorées et des travaux de marbre complexes."
+            },
+            period: "19th Century"
+          },
+          {
+            name: {
+              en: "Théâtre Romain de Fourvière",
+              fr: "Théâtre Romain de Fourvière"
+            },
+            rating: "4.7",
+            image: "https://images.unsplash.com/photo-1543349689-9a4d426bee8e?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Fourvière Hill, Lyon",
+              fr: "Colline de Fourvière, Lyon"
+            },
+            info: {
+              en: "Ancient Roman theatre built in 15 BCE, once seating 10,000 spectators. Still used for cultural performances today.",
+              fr: "Théâtre romain antique construit en 15 avant J.-C., pouvant autrefois accueillir 10 000 spectateurs. Toujours utilisé pour des spectacles culturels aujourd'hui."
+            },
+            period: "1st Century BC"
+          }
+        ],
+        architectural: [
+          {
+            name: {
+              en: "Opéra National de Lyon",
+              fr: "Opéra National de Lyon"
+            },
+            rating: "4.7",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Opposite City Hall, Lyon",
+              fr: "Face à l'Hôtel de Ville, Lyon"
+            },
+            info: {
+              en: "19th-century opera house redesigned by Jean Nouvel with massive glass dome and minimalist black façade.",
+              fr: "Opéra du 19ème siècle redessiné par Jean Nouvel avec un dôme de verre massif et une façade noire minimaliste."
+            },
+            period: "19th Century (redesigned 1990s)"
+          }
+        ],
+        cultural: [
+          {
+            name: {
+              en: "Fresque des Lyonnais",
+              fr: "Fresque des Lyonnais"
+            },
+            rating: "4.4",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Quai Saint-Vincent, Lyon",
+              fr: "Quai Saint-Vincent, Lyon"
+            },
+            info: {
+              en: "Trompe-l'œil mural depicting famous Lyonnais figures throughout history.",
+              fr: "Fresque trompe-l'œil représentant des figures lyonnaises célèbres à travers l'histoire."
+            },
+            period: "1995"
+          }
+        ]
+      },
+      'Nice': {
+        desc: {
+          en: "Historic coastal city with Baroque churches, Russian Orthodox Cathedral, and Belle Époque architecture.",
+          fr: "Ville côtière historique avec des églises baroques, la cathédrale orthodoxe russe et l'architecture Belle Époque."
+        },
+        historical: [
+          {
+            name: {
+              en: "Castle Hill (Colline du Château)",
+              fr: "Colline du Château"
+            },
+            rating: "4.7",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Montée du Château, Old Town",
+              fr: "Montée du Château, Vieille Ville"
+            },
+            info: {
+              en: "Historic hill with medieval fortress ruins, offering sweeping views of Baie des Anges and Vieux-Nice.",
+              fr: "Colline historique avec des ruines de forteresse médiévale, offrant des vues panoramiques sur la Baie des Anges et le Vieux-Nice."
+            },
+            period: "Ancient to 1706"
+          }
+        ],
+        architectural: [
+          {
+            name: {
+              en: "Basilique Notre-Dame de l'Assomption",
+              fr: "Basilique Notre-Dame de l'Assomption"
+            },
+            rating: "4.6",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Avenue Jean Médecin",
+              fr: "Avenue Jean Médecin"
+            },
+            info: {
+              en: "Largest church in Nice with Neo-Gothic architecture, twin towers, and rose window.",
+              fr: "Plus grande église de Nice avec une architecture néo-gothique, des tours jumelles et une rosace."
+            },
+            period: "1868"
+          }
+        ],
+        cultural: [
+          {
+            name: {
+              en: "Promenade des Anglais",
+              fr: "Promenade des Anglais"
+            },
+            rating: "4.8",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Nice waterfront",
+              fr: "Front de mer de Nice"
+            },
+            info: {
+              en: "Iconic seafront promenade with famous blue chairs and Belle Époque hotels.",
+              fr: "Promenade emblématique en front de mer avec les célèbres chaises bleues et les hôtels Belle Époque."
+            },
+            period: "19th Century"
+          }
+        ]
+      },
+      'Marseille': {
+        desc: {
+          en: "Ancient port city with Notre-Dame de la Garde basilica, historic forts, and Le Panier district.",
+          fr: "Ville portuaire ancienne avec la basilique Notre-Dame de la Garde, des forts historiques et le quartier du Panier."
+        },
+        historical: [
+          {
+            name: {
+              en: "Basilique Notre-Dame de la Garde",
+              fr: "Basilique Notre-Dame de la Garde"
+            },
+            rating: "4.8",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "La Garde Hill, Marseille",
+              fr: "Colline de la Garde, Marseille"
+            },
+            info: {
+              en: "Neo-Byzantine basilica known as 'La Bonne Mère', watching over sailors with vivid mosaics and maritime offerings.",
+              fr: "Basilique néo-byzantine connue sous le nom de 'La Bonne Mère', veillant sur les marins avec des mosaïques vives et des offrandes maritimes."
+            },
+            period: "19th Century"
+          }
+        ],
+        architectural: [
+          {
+            name: {
+              en: "Cathédrale de la Major",
+              fr: "Cathédrale de la Major"
+            },
+            rating: "4.5",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "Near port, Marseille",
+              fr: "Près du port, Marseille"
+            },
+            info: {
+              en: "Striped limestone cathedral blending Romanesque and Byzantine styles, one of France's largest.",
+              fr: "Cathédrale en calcaire rayé mélangeant les styles roman et byzantin, l'une des plus grandes de France."
+            },
+            period: "19th Century"
+          }
+        ],
+        cultural: [
+          {
+            name: {
+              en: "MuCEM",
+              fr: "MuCEM"
+            },
+            rating: "4.6",
+            image: "https://images.unsplash.com/photo-1590247813693-5541d1c609fd?auto=format&fit=crop&w=1200&q=60",
+            location: {
+              en: "1 Esplanade du J4, Marseille",
+              fr: "1 Esplanade du J4, Marseille"
+            },
+            info: {
+              en: "Museum of European and Mediterranean Civilizations with striking concrete lace facade.",
+              fr: "Musée des Civilisations de l'Europe et de la Méditerranée avec une façade en dentelle de béton frappante."
+            },
+            period: "2013"
+          }
+        ]
+      }
+      // Note: Other cities would follow the same bilingual pattern
+    };
+
+    const placeholderMonuments = [
+      {
+        name: {
+          en: "Sample Historical Site",
+          fr: "Site Historique Exemple"
+        },
+        rating: "4.2",
+        image: "https://images.unsplash.com/photo-1501117716987-c8e2f1f0f3e0?auto=format&fit=crop&w=1200&q=60",
+        location: {
+          en: "Central area",
+          fr: "Zone centrale"
+        },
+        info: {
+          en: "Important historical monument with cultural significance.",
+          fr: "Monument historique important avec une signification culturelle."
+        },
+        period: "Medieval"
+      },
+      {
+        name: {
+          en: "Architectural Wonder",
+          fr: "Merveille Architecturale"
+        },
+        rating: "4.5",
+        image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=60",
+        location: {
+          en: "City center",
+          fr: "Centre-ville"
+        },
+        info: {
+          en: "Remarkable example of architectural innovation and design.",
+          fr: "Exemple remarquable d'innovation et de design architectural."
+        },
+        period: "Renaissance"
+      }
+    ];
+
+    function el(tag, cls, html) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (html !== undefined) e.innerHTML = html;
+      return e;
+    }
+
+    function renderMonumentCard(m) {
+      const card = el('div', 'monument-card');
+      const media = el('div', 'monument-media');
+      media.style.backgroundImage = `url('${m.image}')`;
+      const body = el('div', 'monument-body');
+      
+      // Use translated content based on current language
+      const monumentName = m.name[currentLang] || m.name.en;
+      const monumentLocation = m.location[currentLang] || m.location.en;
+      const monumentInfo = m.info[currentLang] || m.info.en;
+      
+      body.appendChild(el('div', 'monument-name', `${monumentName} <span style="font-size:12px;color:#8a4c00"> • ${m.rating}⭐</span>`));
+      body.appendChild(el('div', 'monument-meta', `${monumentLocation}`));
+      body.appendChild(el('div', 'monument-icons', `🏛️ ${m.period} &nbsp; 📖 ${monumentInfo.split('.')[0] || ''}`));
+      card.appendChild(media);
+      card.appendChild(body);
+      return card;
+    }
+
+    const overlay = document.getElementById('overlay');
+    const panelCity = document.getElementById('panel-city');
+    const panelDesc = document.getElementById('panel-desc');
+    const historicalGrid = document.getElementById('historical-grid');
+    const architecturalGrid = document.getElementById('architectural-grid');
+    const culturalGrid = document.getElementById('cultural-grid');
+
+    function openOverlay(city) {
+      panelCity.textContent = city;
+      
+      // Update description with translation
+      if (data[city] && data[city].desc) {
+        const cityDesc = data[city].desc[currentLang] || data[city].desc.en;
+        panelDesc.textContent = cityDesc;
+      } else {
+        panelDesc.textContent = currentLang === 'en' 
+          ? "Click a category or scroll to see available monuments."
+          : "Cliquez sur une catégorie ou faites défiler pour voir les monuments disponibles.";
+      }
+      
+      historicalGrid.innerHTML = '';
+      architecturalGrid.innerHTML = '';
+      culturalGrid.innerHTML = '';
+
+      if (data[city]) {
+        if (data[city].historical) data[city].historical.forEach(m => historicalGrid.appendChild(renderMonumentCard(m)));
+        if (data[city].architectural) data[city].architectural.forEach(m => architecturalGrid.appendChild(renderMonumentCard(m)));
+        if (data[city].cultural) data[city].cultural.forEach(m => culturalGrid.appendChild(renderMonumentCard(m)));
+      } else {
+        // Show placeholder for cities without data
+        historicalGrid.appendChild(el('div', 'monument-meta', currentLang === 'en' ? 'No historical monument data yet. Sample picks below:' : 'Aucune donnée de monument historique pour le moment. Exemples ci-dessous:'));
+        placeholderMonuments.forEach(m => historicalGrid.appendChild(renderMonumentCard(m)));
+        architecturalGrid.appendChild(el('div', 'monument-meta', currentLang === 'en' ? 'No architectural monument data yet. Sample picks below:' : 'Aucune donnée de monument architectural pour le moment. Exemples ci-dessous:'));
+        placeholderMonuments.forEach(m => architecturalGrid.appendChild(renderMonumentCard(m)));
+        culturalGrid.appendChild(el('div', 'monument-meta', currentLang === 'en' ? 'No cultural monument data yet. Sample picks below:' : 'Aucune donnée de monument culturel pour le moment. Exemples ci-dessous:'));
+        placeholderMonuments.forEach(m => culturalGrid.appendChild(renderMonumentCard(m)));
+      }
+
+      overlay.classList.add('open');
+      overlay.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function backToGrid() {
+      closeOverlay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function overlayBackgroundClick(e) {
+      if (e.target === overlay) closeOverlay();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('open')) {
+        closeOverlay();
+      }
+    });
+
+    document.querySelectorAll('.city-card').forEach(c => {
+      c.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          const city = c.querySelector('.city-title').innerText;
+          openOverlay(city);
+        }
+      });
+      c.tabIndex = 0;
+    });
+
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navMenu = document.getElementById('main-nav');
+
+    if (menuToggle && navMenu) {
+      menuToggle.addEventListener('click', () => {
+        navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex';
+      });
+    }
+  </script>
+  
+  <!-- Footer Section -->
+  <footer
+    style="background-color: #222; color: #aaa; padding: 25px 0; font-family: Arial, sans-serif; font-size: 14px;">
+    <div
+      style="max-width: 1100px; margin: auto; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+
+      <!-- Left: Quick Info -->
+      <div style="min-width: 200px; margin: 5px 0;">
+        <p style="margin: 0;" data-en="&copy; 2025 France Heritage" data-fr="&copy; 2025 Patrimoine Français">&copy; 2025 France Heritage</p>
+        <p style="margin: 5px 0 0;" data-en="Discover French monuments with us!" data-fr="Découvrez les monuments français avec nous!">Discover French monuments with us!</p>
+      </div>
+
+      <!-- Center: Quick Navigation -->
+      <div style="min-width: 250px; margin: 5px 0; text-align: center;">
+        <a href="#lyon" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Lyon" data-fr="Lyon">Lyon</a> |
+        <a href="#nice" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Nice" data-fr="Nice">Nice</a> |
+        <a href="#contact" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Contact" data-fr="Contact">Contact</a>
+      </div>
+
+      <!-- Right: Social Links -->
+      <div style="min-width: 200px; text-align: right; margin: 5px 0;">
+        <p style="margin: 0 0 8px;" data-en="Follow Us" data-fr="Suivez-nous">Follow Us</p>
+        <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">FB</a>
+        <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">IG</a>
+        <a href="#" style="color: #aaa; text-decoration: none;">TW</a>
+      </div>
+
+    </div>
+  </footer>
+
+</body>
+
+</html>

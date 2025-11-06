@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>French Cities — Hotels (All Inline)</title>
+  <style>
+    :root {
+      --mustard: #ffcc4d;
+      --mustard-dark: #e0b83a;
+      --bg: #fffaf3;
+      --card: #ffffff;
+      --muted: #666;
+      --accent-text: #333;
+      --max-width: 1200px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--bg);
+      color: var(--accent-text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    header {
+      background: linear-gradient(90deg, var(--mustard), var(--mustard-dark));
+      color: #111;
+      padding: 22px 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 6px 20px rgba(224, 184, 58, 0.12);
+    }
+
+    .container {
+      max-width: var(--max-width);
+      margin: 28px auto;
+      padding: 0 20px 60px;
+    }
+
+    /* City Grid */
+    .city-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .city-card {
+      background: linear-gradient(180deg, #fff, #fffaf0);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      cursor: pointer;
+      border: 1px solid rgba(243, 229, 171, 0.9);
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+
+    .city-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.12);
+    }
+
+    .city-title {
+      color: #b35a00;
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .city-desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    /* Full-screen overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 12, 0.45);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px 16px;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .panel {
+      width: min(1100px, 96%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 250, 0.98));
+      border-radius: 14px;
+      box-shadow: 0 30px 80px rgba(11, 20, 30, 0.45);
+      padding: 22px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-left {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .panel-city {
+      font-size: 22px;
+      font-weight: 800;
+      color: #8a3f00;
+    }
+
+    .panel-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .back-btn {
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .close-btn {
+      background: var(--mustard);
+      border: none;
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #111;
+      box-shadow: 0 8px 24px rgba(224, 184, 58, 0.18);
+    }
+
+    /* Category sections */
+    .category {
+      margin-bottom: 22px;
+    }
+
+    .category h3 {
+      margin: 0 0 10px 0;
+      color: #a05c00;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category p.lead {
+      margin: 0 0 12px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Hotel grid inside overlay */
+    .hotel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .hotel-card {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
+      border: 1px solid rgba(243, 229, 171, 0.68);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hotel-media {
+      height: 150px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .hotel-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hotel-name {
+      font-weight: 700;
+      color: #6d2f00;
+      font-size: 15px;
+    }
+
+    .hotel-meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .hotel-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .price {
+      margin-top: 8px;
+      font-weight: 800;
+      color: #0f5132;
+    }
+
+    /* Language Toggle Styles */
+    .lang-toggle {
+      display: flex;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 5px;
+      margin-left: 15px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .lang-btn.active {
+      background: white;
+      color: #111;
+    }
+
+    /* Responsive */
+    @media (max-width:880px) {
+      .panel {
+        padding: 16px;
+        width: 96%;
+      }
+
+      .hotel-media {
+        height: 140px
+      }
+    }
+
+    @media (max-width:520px) {
+      header {
+        font-size: 16px;
+        padding: 16px
+      }
+
+      .city-title {
+        font-size: 16px
+      }
+
+      .city-desc {
+        font-size: 12px
+      }
+
+      .hotel-media {
+        height: 120px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Responsive Header with Navigation -->
+<header style="background-color: #f9f9f9; color: #000; font-family: Arial, sans-serif; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #ddd;">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
+    
+    <!-- Logo or Site Title -->
+    <h1 style="margin: 0; font-size: 22px; letter-spacing: 1px;">
+      <a href="index.html" style="color: #000; text-decoration: none;" data-en="French Hotels" data-fr="Hôtels Français">French Hotels</a>
+    </h1>
+
+    <!-- Navigation with Language Toggle -->
+    <div style="display: flex; align-items: center;">
+      <!-- Navigation Links -->
+      <nav id="main-nav" style="display: flex; align-items: center;">
+        <a href="home.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Home" data-fr="Accueil">Home</a>
+        <a href="hotels.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Hotels" data-fr="Hôtels">Hotels</a>
+        <a href="cultural.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Culture" data-fr="Culture">Culture</a>
+        <a href="monument.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Monuments" data-fr="Monuments">Monuments</a>
+        <a href="rest.html" style="color: #000; text-decoration: none; margin: 0 12px;" data-en="Restaurants" data-fr="Restaurants">Restaurants</a>
+      </nav>
+
+      <!-- Language Toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+    </div>
+
+    <!-- Hamburger Icon for Mobile -->
+    <span id="menu-toggle" style="display: none; font-size: 26px; cursor: pointer; color: #000;">&#9776;</span>
+  </div>
+</header>
+
+<!-- Mobile-Friendly Styles -->
+<style>
+  @media (max-width: 768px) {
+    nav#main-nav {
+      display: none;
+      flex-direction: column;
+      background-color: #f9f9f9;
+      padding: 10px 0;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+    }
+    nav#main-nav a {
+      margin: 10px 0;
+      display: block;
+    }
+    #menu-toggle {
+      display: block;
+    }
+    .lang-toggle {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+</style>
+
+  <div class="container">
+    <div class="city-grid">
+      <div class="city-card" onclick="openOverlay('Lyon')">
+        <div class="city-title">Lyon</div>
+        <div class="city-desc" data-en="A culinary capital and historical city, known for its ancient districts and delicious cuisine." 
+              data-fr="Une capitale culinaire et ville historique, connue pour ses quartiers anciens et sa délicieuse cuisine.">
+              A culinary capital and historical city, known for its ancient districts and delicious cuisine.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Nice')">
+        <div class="city-title">Nice</div>
+        <div class="city-desc" data-en="Located on the French Riviera, offering beautiful beaches and a glamorous coastal atmosphere." 
+              data-fr="Située sur la Côte d'Azur, offrant de magnifiques plages et une atmosphère côtière glamour.">
+              Located on the French Riviera, offering beautiful beaches and a glamorous coastal atmosphere.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Marseille')">
+        <div class="city-title">Marseille</div>
+        <div class="city-desc" data-en="The oldest city in France, featuring a historic port, vibrant culture, and an attractive center." 
+              data-fr="La plus ancienne ville de France, avec un port historique, une culture vibrante et un centre attractif.">
+              The oldest city in France, featuring a historic port, vibrant culture, and an attractive center.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Bordeaux')">
+        <div class="city-title">Bordeaux</div>
+        <div class="city-desc" data-en="A city renowned for its world-class wine regions and beautiful architecture." 
+              data-fr="Une ville réputée pour ses régions viticoles de classe mondiale et sa belle architecture.">
+              A city renowned for its world-class wine regions and beautiful architecture.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Strasbourg')">
+        <div class="city-title">Strasbourg</div>
+        <div class="city-desc" data-en="Situated on the border with Germany, it boasts a unique blend of French and German culture and is known for its charming canals." 
+              data-fr="Située à la frontière avec l'Allemagne, elle offre un mélange unique de cultures française et allemande et est connue pour ses canaux charmants.">
+              Situated on the border with Germany, it boasts a unique blend of French and German culture and is known for its charming canals.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Toulouse')">
+        <div class="city-title">Toulouse</div>
+        <div class="city-desc" data-en="Also called 'La Ville Rose' (The Pink City) for its distinctive pink-hued architecture." 
+              data-fr="Aussi appelée 'La Ville Rose' pour son architecture distinctive de couleur rose.">
+              Also called "La Ville Rose" (The Pink City) for its distinctive pink-hued architecture.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Annecy')">
+        <div class="city-title">Annecy</div>
+        <div class="city-desc" data-en="A beautiful city in the French Alps, often called the 'Venice of the French Alps' for its picturesque canals." 
+              data-fr="Une belle ville des Alpes françaises, souvent appelée la 'Venise des Alpes françaises' pour ses canaux pittoresques.">
+              A beautiful city in the French Alps, often called the "Venice of the French Alps" for its picturesque canals.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Carcassonne')">
+        <div class="city-title">Carcassonne</div>
+        <div class="city-desc" data-en="A medieval fortified city with impressive ramparts, offering a journey back in time." 
+              data-fr="Une cité médiévale fortifiée avec des remparts impressionnants, offrant un voyage dans le temps.">
+              A medieval fortified city with impressive ramparts, offering a journey back in time.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Montpellier')">
+        <div class="city-title">Montpellier</div>
+        <div class="city-desc" data-en="A historic city in the south that has embraced modern influences while retaining its ancient charm." 
+              data-fr="Une ville historique du sud qui a adopté les influences modernes tout en conservant son charme ancien.">
+              A historic city in the south that has embraced modern influences while retaining its ancient charm.
+        </div>
+      </div>
+
+      <div class="city-card" onclick="openOverlay('Avignon')">
+        <div class="city-title">Avignon</div>
+        <div class="city-desc" data-en="Famous for the Palais des Papes (Palace of the Popes) and its iconic bridge." 
+              data-fr="Célèbre pour le Palais des Papes et son pont emblématique.">
+              Famous for the Palais des Papes (Palace of the Popes) and its iconic bridge.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full page overlay panel -->
+  <div id="overlay" class="overlay" onclick="overlayBackgroundClick(event)">
+    <div id="panel" class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-city">
+      <div class="panel-header">
+        <div class="panel-left">
+          <div>
+            <div id="panel-city" class="panel-city">City Name</div>
+            <div id="panel-desc" class="panel-sub" data-en="City short description" data-fr="Description courte de la ville">City short description</div>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="back-btn" onclick="backToGrid()" data-en="Back" data-fr="Retour">Back</button>
+          <button class="close-btn" onclick="closeOverlay()" data-en="Close" data-fr="Fermer">Close</button>
+        </div>
+      </div>
+
+      <!-- CATEGORIES: All inline -->
+      <div id="content-area">
+        <!-- Cheap -->
+        <section id="cheap" class="category">
+          <h3 data-en="Cheap Hotels" data-fr="Hôtels Économiques">Cheap Hotels</h3>
+          <p class="lead" data-en="Budget-friendly stays that prioritise value and location." 
+             data-fr="Séjours économiques qui privilégient la valeur et l'emplacement.">
+             Budget-friendly stays that prioritise value and location.
+          </p>
+          <div id="cheap-grid" class="hotel-grid"></div>
+        </section>
+
+        <!-- Mid-Price -->
+        <section id="mid" class="category">
+          <h3 data-en="Mid-Price Hotels" data-fr="Hôtels de Gamme Moyenne">Mid-Price Hotels</h3>
+          <p class="lead" data-en="Comfortable, well-located hotels with extras and reliable service." 
+             data-fr="Hôtels confortables, bien situés avec des extras et un service fiable.">
+             Comfortable, well-located hotels with extras and reliable service.
+          </p>
+          <div id="mid-grid" class="hotel-grid"></div>
+        </section>
+
+        <!-- Luxurious -->
+        <section id="lux" class="category">
+          <h3 data-en="Luxurious Hotels" data-fr="Hôtels de Luxe">Luxurious Hotels</h3>
+          <p class="lead" data-en="Top-tier hotels with extensive amenities, fine dining and spas." 
+             data-fr="Hôtels haut de gamme avec des équipements étendus, une restauration raffinée et des spas.">
+             Top-tier hotels with extensive amenities, fine dining and spas.
+          </p>
+          <div id="lux-grid" class="hotel-grid"></div>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Language toggle functionality
+    const langButtons = document.querySelectorAll('.lang-btn');
+    let currentLang = 'en';
+
+    langButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const lang = button.getAttribute('data-lang');
+        if (lang !== currentLang) {
+          // Update active button
+          langButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Update language
+          currentLang = lang;
+          updateLanguage(lang);
+        }
+      });
+    });
+
+    // Function to update all text content based on language
+    function updateLanguage(lang) {
+      // Update all elements with data attributes
+      const elements = document.querySelectorAll(`[data-${lang}]`);
+      elements.forEach(element => {
+        const text = element.getAttribute(`data-${lang}`);
+        if (text) {
+          element.textContent = text;
+        }
+      });
+    }
+
+    const data = {
+      'Bordeaux': {
+        desc: "Renowned for world-class wine and beautiful architecture.",
+        cheap: [
+          {
+            name: "ibis budget Bordeaux Centre Gare Saint-Jean",
+            rating: "3.6",
+            image: "images/bordeaux/img1.jpg",
+            location: "60 Rue Eugène Le Roy, 33800 Bordeaux",
+            info: "2-star budget hotel opposite Gare Saint-Jean. Free WiFi, 24-hour reception, AC, breakfast (extra). Pet-friendly.",
+            price: "€50 - €90"
+          },
+          {
+            name: "MEININGER Hotel Bordeaux Gare Saint-Jean",
+            rating: "4.5",
+            image: "images/bordeaux/img2.jpg",
+            location: "12 Rue du Commerce, 33800 Bordeaux",
+            info: "Modern budget chain concept. Free WiFi, guest kitchen, family rooms, bar/café. Easy tram/train access.",
+            price: "€60 - €120"
+          },
+          {
+            name: "Hôtel du Théâtre",
+            rating: "3.7",
+            image: "images/bordeaux/img3.jpg",
+            location: "10 Rue de la Maison Daurade, 33000 Bordeaux",
+            info: "Small 2-star central hotel. Basic rooms, free WiFi, excellent walking location near shopping and theatre.",
+            price: "€55 - €100"
+          }
+        ],
+        mid: [
+          {
+            name: "Mercure Bordeaux Centre Ville",
+            rating: "4.3",
+            image: "images/bordeaux/img4.jpg",
+            location: "Mériadeck, Bordeaux centre",
+            info: "4-star, 194 rooms, gym, buffet breakfast, good balance of comfort & convenience.",
+            price: "€120 - €200"
+          },
+          {
+            name: "Novotel Bordeaux Centre Gare Saint Jean",
+            rating: "4.2",
+            image: "images/bordeaux/img5.jpg",
+            location: "Near Gare Saint-Jean",
+            info: "4-star, convenient for trains and families. Rooms with AC, mini-fridge; restaurant onsite.",
+            price: "€110 - €180"
+          },
+          {
+            name: "Hôtel Burdigala Bordeaux",
+            rating: "4.1",
+            image: "images/bordeaux/img6.jpg",
+            location: "115 rue Georges Bonnac, Bordeaux",
+            info: "Stylish design-oriented hotel, higher-end mid-price option with modern amenities and dining.",
+            price: "€140 - €230"
+          }
+        ],
+        lux: [
+          {
+            name: "InterContinental Bordeaux – Le Grand Hôtel",
+            rating: "4.5",
+            image: "images/bordeaux/img7.jpg",
+            location: "2 Place de la Comédie, Bordeaux",
+            info: "Historic grand hotel, Guerlain Spa, rooftop terraces, Le Pressoir d'Argent (Gordon Ramsay) restaurant.",
+            price: "€400+"
+          },
+          {
+            name: "Les Sources de Caudalie",
+            rating: "4.7",
+            image: "images/bordeaux/img8.jpg",
+            location: "Chemin de Smith Haut-Lafitte, Martillac",
+            info: "Vineyard estate hotel with vinotherapy spa, countryside luxury and fine dining.",
+            price: "€350+"
+          },
+          {
+            name: "Mondrian Bordeaux Les Carmes",
+            rating: "4.6",
+            image: "images/bordeaux/img9.jpg",
+            location: "Chartrons district, Bordeaux",
+            info: "Design hotel by Philippe Starck, modern suites, Morimoto restaurant, heated indoor pool and spa.",
+            price: "€280 - €500"
+          }
+        ]
+      },
+      'Strasbourg': {
+        desc: "A Franco-German gem, known for its canals, culture, and European Parliament.",
+        cheap: [
+          {
+            name: "City Residence Strasbourg",
+            rating: "3.9",
+            image: "https://source.unsplash.com/featured/?strasbourg,hotel,budget",
+            location: "Rue de Molsheim, Strasbourg",
+            info: "Aparthotel near train station, suitable for short stays; small kitchenettes in many rooms.",
+            price: "€50 - €80"
+          },
+          {
+            name: "Hotel Patricia",
+            rating: "3.6",
+            image: "https://source.unsplash.com/featured/?strasbourg,budget",
+            location: "5 Rue de Bitche, Strasbourg",
+            info: "No-frills budget hotel, old town location near Petite France.",
+            price: "€45 - €75"
+          },
+          {
+            name: "Hotel Patricia",
+            rating: "3.6",
+            image: "https://source.unsplash.com/featured/?strasbourg,budget",
+            location: "5 Rue de Bitche, Strasbourg",
+            info: "No-frills budget hotel, old town location near Petite France.",
+            price: "€45 - €75"
+          }
+        ],
+        mid: [
+          {
+            name: "Hotel D Strasbourg",
+            rating: "4.4",
+            image: "https://source.unsplash.com/featured/?strasbourg,mid,hotel",
+            location: "15 Rue du Fossé des Treize",
+            info: "Modern 4-star hotel, spa & sauna, close to historic center.",
+            price: "€110 - €160"
+          },
+          {
+            name: "Hotel D Strasbourg",
+            rating: "4.4",
+            image: "https://source.unsplash.com/featured/?strasbourg,mid,hotel",
+            location: "15 Rue du Fossé des Treize",
+            info: "Modern 4-star hotel, spa & sauna, close to historic center.",
+            price: "€110 - €160"
+          },
+          {
+            name: "Hotel D Strasbourg",
+            rating: "4.4",
+            image: "https://source.unsplash.com/featured/?strasbourg,mid,hotel",
+            location: "15 Rue du Fossé des Treize",
+            info: "Modern 4-star hotel, spa & sauna, close to historic center.",
+            price: "€110 - €160"
+          }
+        ],
+        lux: [
+          {
+            name: "Sofitel Strasbourg Grande Ile",
+            rating: "4.6",
+            image: "https://source.unsplash.com/featured/?strasbourg,luxury,hotel",
+            location: "Place Saint-Pierre-le-Jeune",
+            info: "5-star eco-luxe hotel, gourmet dining, premium bedding, and elegant rooms.",
+            price: "€280 - €380"
+          },
+          {
+            name: "Sofitel Strasbourg Grande Ile",
+            rating: "4.6",
+            image: "https://source.unsplash.com/featured/?strasbourg,luxury,hotel",
+            location: "Place Saint-Pierre-le-Jeune",
+            info: "5-star eco-luxe hotel, gourmet dining, premium bedding, and elegant rooms.",
+            price: "€280 - €380"
+          },
+          {
+            name: "Sofitel Strasbourg Grande Ile",
+            rating: "4.6",
+            image: "https://source.unsplash.com/featured/?strasbourg,luxury,hotel",
+            location: "Place Saint-Pierre-le-Jeune",
+            info: "5-star eco-luxe hotel, gourmet dining, premium bedding, and elegant rooms.",
+            price: "€280 - €380"
+          }
+        ]
+      },
+      'Toulouse': {
+        desc: "Also called La Ville Rose, for its iconic pink terracotta buildings.",
+        cheap: [
+          {
+            name: "Ibis Budget Toulouse Centre Gare",
+            rating: "3.8",
+            image: "https://source.unsplash.com/featured/?toulouse,budget",
+            location: "Boulevard de Strasbourg, Toulouse",
+            info: "Well-reviewed budget option, free WiFi, near main train station.",
+            price: "€55 - €85"
+          },
+          {
+            name: "Ibis Budget Toulouse Centre Gare",
+            rating: "3.8",
+            image: "https://source.unsplash.com/featured/?toulouse,budget",
+            location: "Boulevard de Strasbourg, Toulouse",
+            info: "Well-reviewed budget option, free WiFi, near main train station.",
+            price: "€55 - €85"
+          },
+          {
+            name: "Ibis Budget Toulouse Centre Gare",
+            rating: "3.8",
+            image: "https://source.unsplash.com/featured/?toulouse,budget",
+            location: "Boulevard de Strasbourg, Toulouse",
+            info: "Well-reviewed budget option, free WiFi, near main train station.",
+            price: "€55 - €85"
+          }
+        ],
+        mid: [
+          {
+            name: "Hôtel le Père Léon",
+            rating: "4.3",
+            image: "https://source.unsplash.com/featured/?toulouse,mid,hotel",
+            location: "Place Esquirol, Toulouse",
+            info: "Comfortable 3-star option, central location, breakfast, business rooms.",
+            price: "€95 - €145"
+          },
+          {
+            name: "Hôtel le Père Léon",
+            rating: "4.3",
+            image: "https://source.unsplash.com/featured/?toulouse,mid,hotel",
+            location: "Place Esquirol, Toulouse",
+            info: "Comfortable 3-star option, central location, breakfast, business rooms.",
+            price: "€95 - €145"
+          },
+          {
+            name: "Hôtel le Père Léon",
+            rating: "4.3",
+            image: "https://source.unsplash.com/featured/?toulouse,mid,hotel",
+            location: "Place Esquirol, Toulouse",
+            info: "Comfortable 3-star option, central location, breakfast, business rooms.",
+            price: "€95 - €145"
+          }
+        ],
+        lux: [
+          {
+            name: "La Cour des Consuls Hotel & Spa",
+            rating: "4.7",
+            image: "https://source.unsplash.com/featured/?toulouse,luxury,hotel",
+            location: "Rue des Couteliers, Toulouse",
+            info: "5-star boutique luxury, restaurant, spa, and historic charm.",
+            price: "€320 - €450"
+          },
+          {
+            name: "La Cour des Consuls Hotel & Spa",
+            rating: "4.7",
+            image: "https://source.unsplash.com/featured/?toulouse,luxury,hotel",
+            location: "Rue des Couteliers, Toulouse",
+            info: "5-star boutique luxury, restaurant, spa, and historic charm.",
+            price: "€320 - €450"
+          },
+          {
+            name: "La Cour des Consuls Hotel & Spa",
+            rating: "4.7",
+            image: "https://source.unsplash.com/featured/?toulouse,luxury,hotel",
+            location: "Rue des Couteliers, Toulouse",
+            info: "5-star boutique luxury, restaurant, spa, and historic charm.",
+            price: "€320 - €450"
+          }
+        ]
+      },
+      'Annecy': {
+        desc: "Known as the 'Venice of the Alps,' Annecy offers stunning lakeside views, medieval charm, and outdoor activities.",
+        cheap: [
+          {
+            name: "ibis budget Annecy Poisy",
+            rating: "3.5",
+            image: "annecy/img1.png",
+            location: "159 Route De Closon, Poisy",
+            info: "Economy hotel with modern rooms, free Wi-Fi, and easy access to Annecy city center. Ideal for budget-conscious travelers.",
+            price: "€50 - €80"
+          },
+          {
+            name: "Première Classe Annecy Sud – Cran Gevrier",
+            rating: "3.2",
+            image: "annecy/img2.png",
+            location: "Cran Gevrier, near Annecy",
+            info: "Simple budget hotel with free parking and good public transport access. Suitable for no-frills stays.",
+            price: "€45 - €75"
+          },
+          {
+            name: "Auberge de Jeunesse HI Annecy",
+            rating: "4.0",
+            image: "annecy/img3.png",
+            location: "Annecy city center",
+            info: "Hostel with free breakfast, free Wi-Fi, shared kitchen. Ideal for solo travelers and backpackers.",
+            price: "€30 - €60 (dorm) / €70+ (private)"
+          }
+        ],
+        mid: [
+          {
+            name: "Hébé Hotel",
+            rating: "4.6",
+            image: "annecy/img4.png",
+            location: "Annecy city center",
+            info: "Boutique hotel with stylish rooms, spa services, close to Lake Annecy. Great for couples and style seekers.",
+            price: "€120 - €200"
+          },
+          {
+            name: "Hotel des Alpes",
+            rating: "4.2",
+            image: "annecy/img5.png",
+            location: "Annecy city center",
+            info: "3-star hotel with modern rooms, AC, and convenient access to transport. Good for families and groups.",
+            price: "€100 - €180"
+          },
+          {
+            name: "Le Splendid Hôtel Lac d'Annecy – Handwritten Collection",
+            rating: "4.3",
+            image: "annecy/img6.png",
+            location: "Annecy lakeside",
+            info: "4-star hotel offering elegant rooms, lake views, and spa amenities. A blend of comfort and style.",
+            price: "€150 - €250"
+          }
+        ],
+        lux: [
+          {
+            name: "Auberge du Père Bise – Jean Sulpice",
+            rating: "4.8",
+            image: "annecy/img7.png",
+            location: "Veyrier-du-Lac, Lake Annecy",
+            info: "5-star lakeside hotel with Michelin-starred dining, spa, and striking panoramic views. For luxury seekers and food lovers.",
+            price: "€400+"
+          },
+          {
+            name: "Les Trésoms Lake and Spa Resort",
+            rating: "4.4",
+            image: "annecy/img8.png",
+            location: "Annecy lakeside",
+            info: "4-star resort with spa and gourmet dining overlooking the lake. Popular among wellness travelers and couples.",
+            price: "€250 - €400"
+          },
+          {
+            name: "Imperial Palace",
+            rating: "4.5",
+            image: "annecy/img9.png",
+            location: "Annecy lakeside",
+            info: "Luxurious 5-star hotel featuring a casino, spa, and lake views. Great for elegance and entertainment.",
+            price: "€300 - €500"
+          }
+        ]
+      },
+      'Carcassonne': {
+        desc: "A fortified medieval city in southern France, famous for its fairy-tale double-walled citadel.",
+        cheap: [
+          {
+            name: "ibis budget Carcassonne La Cité",
+            rating: "3.6",
+            image: "carcassonne/img1.png",
+            location: "2.3 km from Carcassonne centre",
+            info: "2-star budget chain with basic rooms, free Wi-Fi, private bathrooms. Great value for sightseeing days.",
+            price: "€50 - €70"
+          },
+          {
+            name: "Hôtel de la Bastide",
+            rating: "3.8",
+            image: "carcassonne/img2.png",
+            location: "Lower town, 300 m from Bastide centre",
+            info: "2-star hotel with family rooms, air-conditioning, and free parking nearby. Quiet and centrally located.",
+            price: "€60 - €90"
+          }
+        ],
+        mid: [
+          {
+            name: "Hôtel Montmorency & Spa",
+            rating: "4.4",
+            image: "carcassonne/img3.png",
+            location: "1.4 km from Carcassonne city centre",
+            info: "Modern 4-star hotel with spa, garden, and pool access. Ideal for comfort and relaxation near the fortress.",
+            price: "€120 - €200"
+          },
+          {
+            name: "Hôtel du Roi & Spa by Sowell Collection",
+            rating: "4.5",
+            image: "carcassonne/img4.png",
+            location: "Near Pont Vieux overlooking fortress walls",
+            info: "5-star hotel offering modern rooms, spa, indoor pool. Premium feel with top location—best booked early.",
+            price: "€160 - €250"
+          }
+        ],
+        lux: [
+          {
+            name: "Hôtel de la Cité & Spa – MGallery",
+            rating: "4.7",
+            image: "carcassonne/img5.png",
+            location: "Inside medieval citadel",
+            info: "5-star neo-gothic hotel with pool, gourmet dining, historic suites. Ultimate fortress experience.",
+            price: "€350 - €600"
+          },
+          {
+            name: "Domaine d'Auriac – Relais & Châteaux",
+            rating: "4.6",
+            image: "carcassonne/img6.png",
+            location: "Just outside Carcassonne in green estate",
+            info: "5-star resort with golf course, gourmet restaurant, pool. Perfect for luxury stays with countryside charm.",
+            price: "€300 - €550"
+          }
+        ]
+      },
+      'Montpellier': {
+        desc: "A vibrant university city in southern France, known for its historic charm, sunny climate, and Mediterranean vibes.",
+        cheap: [
+          {
+            name: "ibis budget Montpellier Centre Millénaire",
+            rating: "3.7",
+            image: "montpellier/img1.png",
+            location: "163 Avenue Raymond Dugrand, near Place de l'Europe",
+            info: "Budget hotel with minimalist rooms, free Wi-Fi, AC, and 24-hour reception. Close to tram T1 for easy city access.",
+            price: "€50 - €80"
+          },
+          {
+            name: "Première Classe Montpellier Sud",
+            rating: "3.5",
+            image: "montpellier/img2.png",
+            location: "331 Rue du Moulin de Labaume, city outskirts",
+            info: "Simple rooms with private bathrooms, free Wi-Fi, and parking. Great for road trippers and tram-accessible to the Old Town.",
+            price: "€45 - €75"
+          },
+          {
+            name: "Hotel Colisée Verdun",
+            rating: "3.9",
+            image: "montpellier/img3.png",
+            location: "1 Rue du Petit Saint Jean, near Place de la Comédie",
+            info: "Basic comfort with free Wi-Fi and 24-hour front desk. Ideal for exploring historic Old Town on foot.",
+            price: "€60 - €90"
+          }
+        ],
+        mid: [
+          {
+            name: "Hôtel des Arceaux",
+            rating: "4.3",
+            image: "montpellier/img4.png",
+            location: "13 Rue des Arceaux, near historic aqueduct",
+            info: "Boutique-style rooms with garden terrace, Wi-Fi, AC, and bar. Peaceful yet accessible for sightseeing.",
+            price: "€100 - €160"
+          },
+          {
+            name: "Hôtel du Parc Euromédecine",
+            rating: "4.1",
+            image: "montpellier/img5.png",
+            location: "3 Rue du Parc Euromédecine, near business district",
+            info: "Cozy rooms with breakfast buffet, Wi-Fi, free parking, and gym access. Suited for students and long stays.",
+            price: "€90 - €140"
+          },
+          {
+            name: "Campanile Montpellier Centre St Roch",
+            rating: "4.2",
+            image: "montpellier/img6.png",
+            location: "7 Rue de la République, near Saint-Roch station",
+            info: "Modern, family-friendly hotel with Wi-Fi, bar, and restaurant. Short walk to Place de la Comédie.",
+            price: "€110 - €170"
+          }
+        ],
+        lux: [
+          {
+            name: "Pullman Montpellier Centre",
+            rating: "4.5",
+            image: "montpellier/img7.png",
+            location: "1 Rue Saint-Guilhem, city centre",
+            info: "4-star luxury hotel with rooftop pool, spa, fitness center, and fine dining. Great city views.",
+            price: "€180 - €300"
+          },
+          {
+            name: "Domaine de Verchant",
+            rating: "4.8",
+            image: "montpellier/img8.png",
+            location: "20 Avenue de Nîmes, suburban Montpellier",
+            info: "5-star vineyard resort with spa, Michelin-starred dining, and luxury suites. Ideal for relaxation and wine tourism.",
+            price: "€300 - €600"
+          },
+          {
+            name: "Grand Hôtel du Midi",
+            rating: "4.4",
+            image: "montpellier/img9.png",
+            location: "Place de la Comédie, city centre",
+            info: "Historic luxury hotel with elegant rooms and concierge services. Perfect for walking to all major attractions.",
+            price: "€200 - €350"
+          }
+        ]
+      },
+      'Lyon': {
+        desc: "A historic gourmet capital of France, blending Roman heritage, UNESCO-listed neighborhoods, and modern elegance along the Rhône and Saône rivers.",
+        lux: [
+          {
+            name: "Villa Florentine",
+            rating: "4.7",
+            image: "lyon/img1.jpg",
+            location: "25 Montée Saint-Barthélémy, Lyon 5",
+            info: "Former 17th-century convent turned luxury hotel with panoramic city views. Features infinity pool, spa, and Michelin-starred dining at Les Terrasses de Lyon.",
+            price: "€350 - €800"
+          },
+          {
+            name: "InterContinental Lyon – Hôtel Dieu",
+            rating: "4.5",
+            image: "lyon/img2.jpg",
+            location: "20 Quai Jules Courmont, Presqu'île",
+            info: "Set in iconic Hôtel Dieu with river-view suites, dome bar, fine dining at Epona, and Cinq Mondes spa. Combines heritage with luxurious comfort.",
+            price: "€280 - €700"
+          }
+        ],
+        mid: [
+          {
+            name: "Mercure Lyon Centre Beaux Arts",
+            rating: "4.5",
+            image: "lyon/img3.jpg",
+            location: "73 Rue du Président Édouard Herriot, Presqu'île",
+            info: "Boutique-style hotel in 19th-century building, featuring chic rooms, local art decor, and breakfast with regional produce. Steps from shops and cafés.",
+            price: "€120 - €200"
+          },
+          {
+            name: "Hôtel des Savoies Lyon Perrache",
+            rating: "3.8",
+            image: "lyon/img4.jpg",
+            location: "80 Rue de la Charité, near Perrache Station",
+            info: "Modern, cozy hotel with easy metro/train access. Freshly renovated rooms and friendly service for budget-minded explorers.",
+            price: "€80 - €130"
+          }
+        ],
+        cheap: [
+          {
+            name: "ibis budget Lyon Centre – Gare Part-Dieu",
+            rating: "4.1",
+            image: "lyon/img5.jpg",
+            location: "52 Rue de la Villette, Lyon 3",
+            info: "Modern budget stay next to Part-Dieu train station. Clean, soundproofed rooms, free Wi-Fi, and breakfast available.",
+            price: "€55 - €90"
+          }
+        ]
+      },
+      'Marseille': {
+        desc: "A vibrant Mediterranean port city known for its historic Vieux-Port, diverse culture, Calanques National Park, and a blend of modern and ancient charm by the sea.",
+        lux: [
+          {
+            name: "InterContinental Marseille – Hotel Dieu",
+            rating: "4.8",
+            image: "marseille/img1.jpg",
+            location: "1 Place Daviel, Marseille 2e",
+            info: "18th-century landmark turned 5-star hotel with Vieux-Port views, vaulted ceilings, Michelin-star dining at Alcyone, spa, and indoor pool.",
+            price: "€350 - €700"
+          },
+          {
+            name: "Sofitel Marseille Vieux-Port",
+            rating: "4.7",
+            image: "marseille/img2.jpg",
+            location: "36 Boulevard Charles Livon, Marseille 7e",
+            info: "Known as 'the balcony of Marseille' — features infinity pool, rooftop bar, spa, and panoramic marina views in elegant sea-inspired decor.",
+            price: "€300 - €550"
+          },
+          {
+            name: "Les Bords de Mer",
+            rating: "4.6",
+            image: "marseille/img3.jpg",
+            location: "52 Corniche Kennedy, Marseille 7e",
+            info: "Seaside sanctuary with modern, minimalist rooms overlooking the sea, rooftop infinity pool, spa, and seafood dining with Provençal flair.",
+            price: "€250 - €400"
+          }
+        ],
+        mid: [
+          {
+            name: "Hôtel C2",
+            rating: "4.5",
+            image: "marseille/img4.jpg",
+            location: "48 Rue Roux de Brignoles, Marseille 6e",
+            info: "Boutique hotel set in a former aristocratic mansion, featuring art-filled spaces, spa, garden courtyard, and private beach shuttle.",
+            price: "€180 - €250"
+          },
+          {
+            name: "NH Collection Marseille",
+            rating: "4.4",
+            image: "marseille/img5.jpg",
+            location: "37 Boulevard des Dames, Marseille 2e",
+            info: "Modern and sleek hotel between business district and old docks, offering spacious rooms, rooftop bar, and proximity to Le Panier.",
+            price: "€150 - €220"
+          }
+        ],
+        cheap: [
+          {
+            name: "Hôtel Edmond Rostand",
+            rating: "4.3",
+            image: "marseille/img6.jpg",
+            location: "31 Rue Dragon, Marseille 6e",
+            info: "Charming, affordable hotel with old-world French appeal in a lively neighbourhood near artisan cafés and boutiques.",
+            price: "€70 - €120"
+          },
+          {
+            name: "Vertigo Vieux-Port Hostel",
+            rating: "4.4",
+            image: "marseille/img7.jpg",
+            location: "38 Rue Fort Notre-Dame, Marseille 1e",
+            info: "Art-filled hostel with friendly vibes, unique dorms, and communal kitchen — perfect for solo travelers and backpackers.",
+            price: "€30 - €60"
+          },
+          {
+            name: "Hôtel Hermès",
+            rating: "4.2",
+            image: "marseille/img8.jpg",
+            location: "2 Rue Bonneterie, Marseille 2e",
+            info: "Simple yet comfortable hotel with a rooftop terrace boasting stunning Vieux-Port views — great value in a prime spot.",
+            price: "€80 - €120"
+          }
+        ]
+      },
+      'Nice': {
+        desc: "A vibrant jewel of the French Riviera, famous for its Mediterranean beaches, colorful Old Town, and skyline views along the Promenade des Anglais.",
+        lux: [
+          {
+            name: "Hotel Negresco",
+            rating: "5.0",
+            image: "nice/img1.jpg",
+            location: "Promenade des Anglais",
+            info: "Belle Époque landmark since 1913, hosting royalty and celebrities. Features antique décor, Mediterranean views, and Michelin-starred dining at Le Chantecler.",
+            price: "€400 - €1200"
+          },
+          {
+            name: "Hyatt Regency Nice Palais de la Méditerranée",
+            rating: "5.0",
+            image: "nice/img2.jpg",
+            location: "Promenade des Anglais",
+            info: "Art Deco luxury with ocean-view rooms, rooftop pool, and elegant interiors. Perfect for leisure and business stays.",
+            price: "€350 - €900"
+          },
+          {
+            name: "Le Meridien Nice",
+            rating: "5.0",
+            image: "nice/img3.jpg",
+            location: "Promenade des Anglais",
+            info: "Modern hotel with rooftop infinity pool and panoramic sea views. Ideal during Nice Carnival for balcony parade views.",
+            price: "€300 - €800"
+          }
+        ],
+        mid: [
+          {
+            name: "Hotel Beau Rivage",
+            rating: "4.0",
+            image: "nice/img4.jpg",
+            location: "Rue Saint-François de Paule, Old Town",
+            info: "Boutique charm with Mediterranean décor and easy access to beaches and markets. Offers cozy and personalized experiences.",
+            price: "€150 - €250"
+          },
+          {
+            name: "Hotel Rossetti",
+            rating: "4.0",
+            image: "nice/img5.jpg",
+            location: "Rue Rossetti, Old Town",
+            info: "Elegant, intimate hotel with sunlit terraces. Close to cafés, markets, and historic spots in Old Nice.",
+            price: "€140 - €220"
+          },
+          {
+            name: "Hotel Aston La Scala",
+            rating: "4.0",
+            image: "nice/img6.jpg",
+            location: "Avenue Félix Faure",
+            info: "Modern hotel near train station with rooftop pool and 360° city views. Known for its jazz evenings at the Sky Bar.",
+            price: "€160 - €260"
+          }
+        ],
+        cheap: [
+          {
+            name: "Hotel de la Fontaine",
+            rating: "3.0",
+            image: "nice/img7.jpg",
+            location: "Rue de la Fontaine",
+            info: "Friendly, budget hotel in a quiet area of Old Nice. Clean and comfortable rooms with walking access to markets and beaches.",
+            price: "€80 - €130"
+          },
+          {
+            name: "Hotel Ozz by Happyculture",
+            rating: "3.0",
+            image: "nice/img8.jpg",
+            location: "Near train station, Old Town",
+            info: "Modern social hostel with shared rooms, communal kitchen, and free walking tours. Ideal for backpackers and budget travelers.",
+            price: "€30 - €80"
+          },
+          {
+            name: "Hotel Florence Nice",
+            rating: "3.0",
+            image: "nice/img9.jpg",
+            location: "Rue de Florence, Central Nice",
+            info: "Charming eco-friendly boutique hotel with bright rooms and a terrace. Offers rooftop honey at breakfast.",
+            price: "€90 - €140"
+          }
+        ]
+      }
+    };
+
+    const placeholderHotels = [
+      {
+        name: "Sample Budget Inn",
+        rating: "3.4",
+        image: "https://images.unsplash.com/photo-1501117716987-c8e2f1f0f3e0?auto=format&fit=crop&w=1200&q=60",
+        location: "Central area",
+        info: "Affordable rooms, basic amenities, good local transport links.",
+        price: "€45 - €85"
+      },
+      {
+        name: "Comfort Stay",
+        rating: "4.0",
+        image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=60",
+        location: "Near attractions",
+        info: "Mid-range hotel with added conveniences and breakfast.",
+        price: "€110 - €180"
+      },
+      {
+        name: "Grand Luxe Hotel",
+        rating: "4.6",
+        image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=60",
+        location: "Prime location",
+        info: "High-end facilities, spa, fine dining.",
+        price: "€300+"
+      }
+    ];
+
+    function el(tag, cls, html) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (html !== undefined) e.innerHTML = html;
+      return e;
+    }
+
+    function renderHotelCard(h) {
+      const card = el('div', 'hotel-card');
+      const media = el('div', 'hotel-media');
+      media.style.backgroundImage = `url('${h.image}')`;
+      const body = el('div', 'hotel-body');
+      body.appendChild(el('div', 'hotel-name', `${h.name} <span style="font-size:12px;color:#8a4c00"> • ${h.rating}⭐</span>`));
+      body.appendChild(el('div', 'hotel-meta', `${h.location}`));
+      body.appendChild(el('div', 'hotel-icons', `🛏️ ${h.info.split(',')[0] || ''} &nbsp; 🍽️ ${h.info.split('•')[0] || ''}`));
+      body.appendChild(el('div', 'price', `${h.price}`));
+      card.appendChild(media);
+      card.appendChild(body);
+      return card;
+    }
+
+    const overlay = document.getElementById('overlay');
+    const panelCity = document.getElementById('panel-city');
+    const panelDesc = document.getElementById('panel-desc');
+    const cheapGrid = document.getElementById('cheap-grid');
+    const midGrid = document.getElementById('mid-grid');
+    const luxGrid = document.getElementById('lux-grid');
+
+    function openOverlay(city) {
+      panelCity.textContent = city;
+      panelDesc.textContent = (data[city] && data[city].desc) ? data[city].desc : "Click a category or scroll to see available hotels.";
+      cheapGrid.innerHTML = '';
+      midGrid.innerHTML = '';
+      luxGrid.innerHTML = '';
+
+      if (data[city]) {
+        data[city].cheap.forEach(h => cheapGrid.appendChild(renderHotelCard(h)));
+        data[city].mid.forEach(h => midGrid.appendChild(renderHotelCard(h)));
+        data[city].lux.forEach(h => luxGrid.appendChild(renderHotelCard(h)));
+      } else {
+        cheapGrid.appendChild(el('div', 'hotel-meta', 'No cheap hotel data yet. Sample picks below:'));
+        placeholderHotels.forEach(h => cheapGrid.appendChild(renderHotelCard(h)));
+        midGrid.appendChild(el('div', 'hotel-meta', 'No mid-price hotel data yet. Sample picks below:'));
+        placeholderHotels.forEach(h => midGrid.appendChild(renderHotelCard(h)));
+        luxGrid.appendChild(el('div', 'hotel-meta', 'No luxury hotel data yet. Sample picks below:'));
+        placeholderHotels.forEach(h => luxGrid.appendChild(renderHotelCard(h)));
+      }
+
+      overlay.classList.add('open');
+      overlay.scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeOverlay() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function backToGrid() {
+      closeOverlay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function overlayBackgroundClick(e) {
+      if (e.target === overlay) closeOverlay();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('open')) {
+        closeOverlay();
+      }
+    });
+
+    document.querySelectorAll('.city-card').forEach(c => {
+      c.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          const city = c.querySelector('.city-title').innerText;
+          openOverlay(city);
+        }
+      });
+      c.tabIndex = 0;
+    });
+
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navMenu = document.getElementById('main-nav');
+
+    if (menuToggle && navMenu) {
+      menuToggle.addEventListener('click', () => {
+        navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex';
+      });
+    }
+  </script>
+  <!-- Footer Section (Updated, No Newsletter) -->
+<footer
+  style="background-color: #222; color: #aaa; padding: 25px 0; font-family: Arial, sans-serif; font-size: 14px;">
+  <div
+    style="max-width: 1100px; margin: auto; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+
+    <!-- Left: Quick Info -->
+    <div style="min-width: 200px; margin: 5px 0;">
+      <p style="margin: 0;" data-en="&copy; 2025 France travels" data-fr="&copy; 2025 Voyages France">&copy; 2025 France travels</p>
+      <p style="margin: 5px 0 0;" data-en="Discover France with us!" data-fr="Découvrez la France avec nous!">Discover France with us!</p>
+    </div>
+
+    <!-- Center: Quick Navigation -->
+    <div style="min-width: 250px; margin: 5px 0; text-align: center;">
+      <a href="#lyon" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Lyon" data-fr="Lyon">Lyon</a> |
+      <a href="#nice" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Nice" data-fr="Nice">Nice</a> |
+      <a href="#contact" style="color: #aaa; margin: 0 8px; text-decoration: none;" data-en="Contact" data-fr="Contact">Contact</a>
+    </div>
+
+    <!-- Right: Social Links -->
+    <div style="min-width: 200px; text-align: right; margin: 5px 0;">
+      <p style="margin: 0 0 8px;" data-en="Follow Us" data-fr="Suivez-nous">Follow Us</p>
+      <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">FB</a>
+      <a href="#" style="color: #aaa; margin-right: 10px; text-decoration: none;">IG</a>
+      <a href="#" style="color: #aaa; text-decoration: none;">TW</a>
+    </div>
+
+  </div>
+</footer>
+
+
+
+</body>
+
+</html>
